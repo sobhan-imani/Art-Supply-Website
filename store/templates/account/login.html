@@ -1,60 +1,79 @@
 {% extends "../base.html" %}
 {% block title %}Log In{% endblock %}
 
-{% block content %}
+{# messages belong inside the login card here, not in the base layout #}
+{% block messages %}{% endblock messages %}
 
+{% block content %}
 <div class="container d-flex justify-content-center">
-  <div class="border rounded w-50 mt-4 mb-5 pt-4">
+  <div class="border rounded w-100 mt-4 mb-5 pt-4" style="max-width: 32rem;">
     <h2 class="text-center">Login</h2>
-    <div class="d-flex justify-content-center">
+
+    <div class="px-4 pt-3">
       {% include '../messages.html' %}
-      <form id="login-form" method="post" class="m-5 p-3">
-        {% csrf_token %}
-        <div class="row">
-          {% for field in form %}
-          <div class="col-xlg-6 text-center mt-4">
-            {% if field.name != 'remember' %}
-            <div class="form-floating">
-              {{field}}
-              <label class="" for="id_{{field.name}}">{{field.label}}</label>
-                {% endif %}
-            </div>
-          </div>
-          {% endfor %}
-          <div class="form-check form-switch pt-4 pb-4">
-            {{ form.remember }}
-            <label class="form-check-label" for="id_{{form.remember.name}}">{{form.remember.label}}</label>
-          </div>
-          <button class="btn btn-primary mt-1" type="submit">Login</button>
-      </form>
+      {% include '../partials/form-errors.html' %}
     </div>
+
+    <form id="login-form" method="post" class="px-4 pb-4" novalidate>
+      {% csrf_token %}
+      {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+
+      <div class="mb-3">
+        {% include '../partials/field.html' with field=form.username %}
+      </div>
+      <div class="mb-3">
+        {% include '../partials/field.html' with field=form.password %}
+      </div>
+
+      <div class="form-check form-switch py-2">
+        {{ form.remember }}
+        <label class="form-check-label" for="{{ form.remember.id_for_label }}">{{ form.remember.label }}</label>
+      </div>
+
+      <button class="btn btn-primary w-100 py-2 mt-2" type="submit">Login</button>
+      <p class="text-center text-muted mt-3 mb-0">
+        No account yet? <a href="{% url 'account_signup' %}">Sign up</a>
+      </p>
+    </form>
   </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-  let form = document.getElementById('login-form');
-  form.addEventListener("submit", (e) => {
-    let formdata = {
-      "phone_number": form.username.value,
-      "password": form.password.value
-    }
-    fetch("{% url 'token_obtain_pair' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formdata)
-    })
-      .then(response => response.json())
-      .then(data => {
+  // The API side of the site is token based, so grab a JWT with the same
+  // credentials before letting the browser post the session login. Without
+  // waiting for it the page would navigate away mid request and localStorage
+  // would stay empty, which is what breaks the wishlist buttons later.
+  (function () {
+    const form = document.getElementById('login-form');
+    if (!form) return;
+
+    let posting = false;
+    form.addEventListener('submit', function (event) {
+      if (posting) return;
+      event.preventDefault();
+      posting = true;
+
+      const credentials = {
+        phone_number: form.username.value,
+        password: form.password.value,
+      };
+      const token = fetch("{% url 'token_obtain_pair' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      }).then(response => response.json()).then(data => {
         if (data.access) {
           localStorage.setItem('token', data.access);
           localStorage.setItem('refreshToken', data.refresh);
         }
-      })
-    }
-  )
-</script>
+      }).catch(() => { /* the session login below is what really matters */ });
 
+      // Never let a slow token endpoint hold the login hostage.
+      const timeout = new Promise(resolve => setTimeout(resolve, 3000));
+      Promise.race([token, timeout]).then(() => form.submit());
+    });
+  })();
+</script>
 {% endblock %}

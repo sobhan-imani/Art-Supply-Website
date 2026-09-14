@@ -4,6 +4,4 @@ from django.utils.translation import gettext_lazy as _
 
 class OrdersConfig(AppConfig):
     name = 'orders'
-    class Meta:
-        verbose_name = _('Order')
-        verbose_name_plural = _('Orders')
+    verbose_name = _('Orders')

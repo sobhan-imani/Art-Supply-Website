@@ -11377,3 +11377,17 @@ textarea.form-control-lg {
     z-index: 98; 
     cursor: pointer; 
 }
+
+/* --- navbar on small screens --- */
+@media (max-width: 991.98px) {
+  /* a long category list must stay usable on a phone */
+  .navbar-collapse {
+    max-height: 75vh;
+    overflow-y: auto; }
+  /* the dropdown renders inline down here, so line it up under "Products" */
+  .navbar-collapse .dropdown-menu {
+    padding-left: 1rem !important; }
+  .navbar-collapse .nav-link {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem; }
+}

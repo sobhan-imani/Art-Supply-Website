@@ -1,9 +1,12 @@
 from django.contrib import admin
-from .models import Profile, Address
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import Group
-from .forms import UserUpdateForm, SignupForm, ProfileUpdateForm
+
+from core.admin import SoftDeleteAdmin
+
+from .forms import ProfileUpdateForm, SignupForm, UserUpdateForm
+from .models import Address, Profile
+
 User = get_user_model()
 
 @admin.register(User)
@@ -29,9 +32,9 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ("groups", "user_permissions") 
 
 @admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
+class ProfileAdmin(SoftDeleteAdmin):
     form = ProfileUpdateForm
-    list_display=("__str__" ,"is_deleted","created_at")
+    list_display=("__str__", "withdrawn", "created_at")
     ordering = ("is_deleted", "created_at")
     search_fields = ("user__phone_number","user__email",)
     list_filter = ("is_deleted",)
@@ -39,8 +42,8 @@ class ProfileAdmin(admin.ModelAdmin):
     autocomplete_fields = ("user",)
 
 @admin.register(Address)
-class AddressAdmin(admin.ModelAdmin):
-    list_display=("__str__", "created_at", "is_deleted")
+class AddressAdmin(SoftDeleteAdmin):
+    list_display=("__str__", "created_at", "withdrawn")
     ordering = ("created_at", "is_deleted",)
     search_fields = ("profile__user__phone_number", )
     list_filter = ("is_deleted","country", "district")

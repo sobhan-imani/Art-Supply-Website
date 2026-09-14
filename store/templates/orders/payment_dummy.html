@@ -1,0 +1,43 @@
+{% extends "../base.html" %}
+
+{% block title %}Payment for order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm mx-auto" style="max-width: 34rem;">
+        <div class="card-header bg-dark text-white d-flex justify-content-between">
+            <span><i class="bi-credit-card me-2"></i>Payment</span>
+            <span class="badge bg-warning text-dark">Test gateway</span>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted">
+                This stands in for the payment provider so the whole flow can be
+                walked without a real bank. Pick an outcome.
+            </p>
+
+            <dl class="row mb-4">
+                <dt class="col-6">Order</dt>
+                <dd class="col-6 text-end font-monospace">#{{ order.id }}</dd>
+                <dt class="col-6">Amount</dt>
+                <dd class="col-6 text-end font-monospace">${{ payment.amount|floatformat:2 }}</dd>
+                <dt class="col-6">Reference</dt>
+                <dd class="col-6 text-end font-monospace text-truncate">{{ payment.token }}</dd>
+            </dl>
+
+            <form method="post" action="{% url 'orders:payment_callback' payment.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="reference" value="{{ payment.token }}">
+                <button class="btn btn-success w-100 py-2 fw-bold mb-2" type="submit"
+                        name="outcome" value="paid">PAY ${{ payment.amount|floatformat:2 }}</button>
+                <button class="btn btn-outline-danger w-100" type="submit"
+                        name="outcome" value="failed">Simulate a failed payment</button>
+            </form>
+
+            <p class="small text-muted mt-3 mb-0">
+                Your items stay reserved until {{ order.payment_deadline|date:"H:i" }}.
+                After that they go back on sale.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

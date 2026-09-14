@@ -1,73 +1,156 @@
 {% extends "../base.html" %}
+{% load query %}
 
 {% block title %}Products{% endblock %}
 
 {% block content %}
 <section class="py-5">
-    <h3 class="fw-bolder mx-5 mb-4 pb-4"><a class="link text-decoration-none text-black"
-         href="{% url 'products-list' %}">Products</a></h3>
-    <div class="container-fluid px-4 px-lg-5 mt-3 row gx-md-5">
-        <div class="col-md-10 order-2 order-md-1">
-            <div class="row gx-4 gx-lg-5 row-cols-1 row-cols-md-2 row-cols-xl-3 justify-content-first">
-                {% for item in products %}
-                {% include '../cards.html' with item=item %}
-                {% endfor %}
+    <div class="container-fluid px-4 px-lg-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bolder mb-1">
+                    <a class="link text-decoration-none text-black" href="{% url 'products-list' %}">Products</a>
+                </h3>
+                <p class="text-muted mb-0">
+                    {{ page_obj.paginator.count }} product{{ page_obj.paginator.count|pluralize }}
+                    {% if category %}in {{ category }}{% endif %}
+                    {% if search %}matching &ldquo;{{ search }}&rdquo;{% endif %}
+                </p>
             </div>
-        </div>
-        <div class="col-md-2 mb-5 order-1 order-md-2 text-center" style="border-left: 1px solid rgba(0, 0, 0, 0.151);">
-            <h5>Categories</h5><hr>
 
-            <form method="get">
-                <select id="category-select" class="form-select" aria-label="Categories" name="category" onchange="categorySelect(this)">
-                    <option value="">All</option>
-                    {% for item in categories %}
-                    {% if item.category_set %}
-                    <optgroup value="{{ item.category_name }}" label="{{ item.category_name }}">
-                        <option value="{{item.category_name}}" {% if item.category_name == category %}selected{% endif %}>{{item.category_name}} - All</option>
-                        {% for subitem in item.category_set.all %}
-                        <option value="{{ subitem.category_name }}">{{ subitem.category_name }}</option>
-                        {% endfor %}
-                    </optgroup>
-                    {% else %}
-                    <option value="{{item.category_name}}" {% if item.category_name == category %}selected{% endif %}>{{item.category_name}} - All</option>
-                    {% endif %}
-                    {% endfor %}
+            <form class="d-flex gap-2 mt-3 mt-md-0" method="get">
+                {# keep the other filters while searching or sorting #}
+                {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+                {% if discount %}<input type="hidden" name="discount" value="1">{% endif %}
+                <input class="form-control" type="search" name="q" value="{{ search }}"
+                       placeholder="Search products" aria-label="Search products">
+                <select class="form-select" name="sort" aria-label="Sort by" style="min-width: 11rem;"
+                        onchange="this.form.submit()">
+                    <option value="new" {% if sort == 'new' %}selected{% endif %}>Newest first</option>
+                    <option value="price" {% if sort == 'price' %}selected{% endif %}>Price: low to high</option>
+                    <option value="-price" {% if sort == '-price' %}selected{% endif %}>Price: high to low</option>
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Name</option>
                 </select>
-                <div id="more-categories"></div>
-                <div class="form-check form-switch pt-4 pb-4 d-flex justify-content-between">
-                    <input class="form-check-input" type="checkbox" id="discount" name="discount" value="1" {% if discount == '1' %}checked{% endif %}>
-                    <label class="form-check-label" for="discount">Discount</label>
-                </div>  
-                <button class="btn btn-outline-dark w-100 my-2" type="submit" >Apply</button>
+                <button class="btn btn-outline-dark" type="submit">Go</button>
             </form>
         </div>
-    </div>
-    <div class="d-flex justify-content-center">
-        <nav aria-label="Page navigator">
-            <ul class="pagination">
-                <li class="page-item {% if not page_obj.has_previous %}disabled{%endif%}">
-                    <a class="page-link" href="?page=1" aria-label="First" {% if not page_obj.has_previous %}tabindex="-1"{%endif%}>
-                        <span aria-hidden="true">&laquo;</span> First</a>
-                </li>
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                {{ page_obj.previous_page_number }}</a>
-                </li>
-                {% endif %}
-              <li class="page-item active"><a class="page-link" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a></li>
-              {% if page_obj.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
-              </li>
+
+        {% if has_filters %}
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+            <span class="text-muted small">Filters:</span>
+            {% if category %}
+            <a class="badge bg-dark text-decoration-none py-2" href="?{% query_replace category=None page=None %}">
+                {{ category }} <i class="bi-x ms-1"></i>
+            </a>
             {% endif %}
-              <li class="page-item {% if not page_obj.has_next %}disabled{%endif%}"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last"
-                {% if not page_obj.has_next %}tabindex="-1"{%endif%}>Last
-                <span aria-hidden="true">&raquo;</span>
-                </a></li>
-            </ul>
-          </nav>
+            {% if search %}
+            <a class="badge bg-dark text-decoration-none py-2" href="?{% query_replace q=None page=None %}">
+                &ldquo;{{ search }}&rdquo; <i class="bi-x ms-1"></i>
+            </a>
+            {% endif %}
+            {% if discount %}
+            <a class="badge bg-success text-decoration-none py-2" href="?{% query_replace discount=None page=None %}">
+                Discounted <i class="bi-x ms-1"></i>
+            </a>
+            {% endif %}
+            <a class="small" href="{% url 'products-list' %}">Clear all</a>
+        </div>
+        {% endif %}
+
+        <div class="row gx-md-5">
+            <div class="col-md-10 order-2 order-md-1">
+                <div class="row gx-4 gx-lg-5 row-cols-1 row-cols-md-2 row-cols-xl-3 justify-content-first">
+                    {% for item in products %}
+                    {% include '../cards.html' with item=item %}
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <p class="fs-5 text-muted mb-3">Nothing matches that yet.</p>
+                        <a class="btn btn-outline-dark" href="{% url 'products-list' %}">Show everything</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-2 mb-5 order-1 order-md-2 text-center"
+                 style="border-left: 1px solid rgba(0, 0, 0, 0.151);">
+                <h5>Categories</h5>
+                <hr>
+                <form method="get">
+                    {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+                    {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+                    <select id="category-select" class="form-select" aria-label="Categories" name="category">
+                        <option value="">All</option>
+                        {% for parent in categories %}
+                        {% if parent.category_set.all %}
+                        <optgroup label="{{ parent.category_name|title }}">
+                            <option value="{{ parent.category_name }}"
+                                {% if parent.category_name == category %}selected{% endif %}>
+                                {{ parent.category_name|title }} - All
+                            </option>
+                            {% for child in parent.category_set.all %}
+                            <option value="{{ child.category_name }}"
+                                {% if child.category_name == category %}selected{% endif %}>
+                                {{ child.category_name|title }}
+                            </option>
+                            {% endfor %}
+                        </optgroup>
+                        {% else %}
+                        <option value="{{ parent.category_name }}"
+                            {% if parent.category_name == category %}selected{% endif %}>
+                            {{ parent.category_name|title }}
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <div class="form-check form-switch pt-4 pb-4 d-flex justify-content-between">
+                        <input class="form-check-input" type="checkbox" id="discount" name="discount" value="1"
+                               {% if discount == '1' %}checked{% endif %}>
+                        <label class="form-check-label" for="discount">Discount</label>
+                    </div>
+                    <button class="btn btn-outline-dark w-100 my-2" type="submit">Apply</button>
+                </form>
+            </div>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigator">
+                <ul class="pagination">
+                    {# every link keeps the filters and the sort order #}
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="?{% query_replace page=1 %}" aria-label="First"
+                           {% if not page_obj.has_previous %}tabindex="-1"{% endif %}>
+                            <span aria-hidden="true">&laquo;</span> First
+                        </a>
+                    </li>
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% query_replace page=page_obj.previous_page_number %}">
+                            {{ page_obj.previous_page_number }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="?{% query_replace page=page_obj.number %}">{{ page_obj.number }}</a>
+                    </li>
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% query_replace page=page_obj.next_page_number %}">
+                            {{ page_obj.next_page_number }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?{% query_replace page=page_obj.paginator.num_pages %}"
+                           aria-label="Last" {% if not page_obj.has_next %}tabindex="-1"{% endif %}>
+                            Last <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </section>
-
 {% endblock %}

@@ -23,7 +23,15 @@
         <!-- Product actions-->
         <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
             <div class="text-center">
-                <a class="btn btn-outline-dark mt- mx-2" href="#">Add to cart</a>
+                {% if item.stock > 0 %}
+                <form data-cart-form method="post" action="{% url 'orders:cart_add' item.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <button class="btn btn-outline-dark mt- mx-2" type="submit">Add to cart</button>
+                </form>
+                {% else %}
+                <button class="btn btn-outline-dark mt- mx-2" type="button" disabled>Out of stock</button>
+                {% endif %}
             </div>
         </div>
     </div>

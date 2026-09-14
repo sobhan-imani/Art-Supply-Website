@@ -1,5 +1,6 @@
 from core.managers import BaseManager
 
+
 class ItemManager(BaseManager):
     def is_available(self):
         return super().get_queryset().filter(stock__gt=0)

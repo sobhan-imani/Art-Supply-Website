@@ -1,0 +1,26 @@
+# Lint rules that pay for themselves on a Django project.
+line-length = 110
+target-version = "py311"
+exclude = ["**/migrations/*"]
+
+[lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes: undefined names, unused imports
+    "I",    # import order
+    "B",    # bugbear: likely mistakes
+    "DJ",   # Django specific checks
+    "UP",   # outdated syntax
+    "C4",   # comprehensions
+]
+ignore = [
+    "E501",     # long lines are handled by line-length above
+    "B905",     # zip(strict=) is not needed here
+    # null=True on text fields: true in principle, but these columns already
+    # exist with data in them, and changing them is a data migration, not a lint
+    # fix. Revisit deliberately rather than to please the linter.
+    "DJ001",
+]
+
+[lint.isort]
+known-first-party = ["api", "core", "customers", "orders", "products", "config"]

@@ -1,10 +1,12 @@
-{% if messages %}
+{% comment %}
+Flash messages. Bootstrap has no alert-error/alert-debug, so the django tags are
+mapped to the classes that actually exist.
+{% endcomment %}
 {% for message in messages %}
-<div
-  class="alert {% if message.tags == 'error' %}alert-danger{% endif %} alert-{{message.tags|cut:'debug'}} alert-dismissible fade show"
-  role="alert">
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  {{message}}
-</div>
-{% endfor %}
+{% if message.level_tag == 'error' %}{% with css='danger' icon='bi-exclamation-triangle-fill' %}{% include 'partials/alert.html' %}{% endwith %}
+{% elif message.level_tag == 'warning' %}{% with css='warning' icon='bi-exclamation-circle-fill' %}{% include 'partials/alert.html' %}{% endwith %}
+{% elif message.level_tag == 'success' %}{% with css='success' icon='bi-check-circle-fill' %}{% include 'partials/alert.html' %}{% endwith %}
+{% elif message.level_tag == 'debug' %}{% with css='secondary' icon='bi-bug-fill' %}{% include 'partials/alert.html' %}{% endwith %}
+{% else %}{% with css='info' icon='bi-info-circle-fill' %}{% include 'partials/alert.html' %}{% endwith %}
 {% endif %}
+{% endfor %}

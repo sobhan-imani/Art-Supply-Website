@@ -129,8 +129,17 @@ report.xml
 *.pyc
 __pycache__
 db.sqlite3
-media
-migrations
+
+# Uploaded files belong on the server, not in the repo. Anything the site needs
+# in order to render (placeholders and the like) lives in static/ instead.
+store/media/
+
+# collectstatic output (STATIC_ROOT), generated at deploy time.
+store/staticfiles/
+
+# Migrations are code: they MUST be committed, or a fresh deploy builds the
+# wrong schema. Only the compiled bytecode is ignored.
+store/*/migrations/__pycache__/
 
 # Backup files #
 *.bak

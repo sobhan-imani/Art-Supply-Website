@@ -1,0 +1,112 @@
+{% extends "../base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row gx-lg-5">
+        <div class="col-lg-7">
+            <h3 class="mb-4 pb-2 border-bottom">Delivery address</h3>
+            {% include '../partials/form-errors.html' %}
+
+            {% comment %}
+            novalidate on purpose: the new address fields are hidden while a saved
+            address is selected, and a hidden required input makes the browser
+            refuse to submit without telling anyone. The view validates instead.
+            {% endcomment %}
+            <form method="post" id="checkout-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
+
+                {% if addresses %}
+                <div class="mb-4">
+                    {% for address in addresses %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="address" id="address-{{ address.id }}"
+                               value="{{ address.id }}"
+                               {% if address.id|stringformat:"s" == selected_address or forloop.first and not selected_address %}checked{% endif %}>
+                        <label class="form-check-label" for="address-{{ address.id }}">
+                            {{ address }}<span class="text-muted font-monospace ms-2">{{ address.postal_code }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="radio" name="address" id="address-new" value=""
+                               {% if selected_address == '' and form.errors %}checked{% endif %}>
+                        <label class="form-check-label" for="address-new">Ship to a new address</label>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">You have no saved address yet, so fill one in below.</p>
+                {% endif %}
+
+                <div id="new-address" class="row g-3 {% if addresses and not form.errors %}d-none{% endif %}">
+                    {% for field in form %}
+                    <div class="col-md-6">
+                        {% include '../partials/field.html' with field=field %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn-dark w-100 py-2 fw-bold mt-4" type="submit">PLACE ORDER</button>
+            </form>
+        </div>
+
+        <div class="col-lg-5 mt-5 mt-lg-0">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="mb-4">Your order</h4>
+                    <ul class="list-unstyled">
+                        {% for row in cart %}
+                        <li class="d-flex justify-content-between mb-3">
+                            <span>
+                                <a class="link text-decoration-none text-black"
+                                   href="{% url 'product-detail' row.item.id %}">{{ row.item.name }}</a>
+                                <small class="text-muted font-monospace d-block">{{ row.quantity }} x ${{ row.price }}</small>
+                            </span>
+                            <span class="font-monospace">${{ row.total_price|floatformat:2 }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <hr>
+                    <h5 class="d-flex justify-content-between mb-0">
+                        <span>Total:</span>
+                        <span class="font-monospace fw-bolder">${{ cart.get_total_price|floatformat:2 }}</span>
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const fields = document.getElementById('new-address');
+        const form = document.getElementById('checkout-form');
+        const choices = document.querySelectorAll('input[name="address"]');
+        if (!fields || !form) return;
+
+        // Only ask for the address fields when the customer is not reusing a saved
+        // one, and disable them while hidden so nothing half filled is posted.
+        function toggle() {
+            const selected = document.querySelector('input[name="address"]:checked');
+            const reusing = Boolean(selected && selected.value);
+            fields.classList.toggle('d-none', reusing);
+            fields.querySelectorAll('input, select, textarea').forEach(function (input) {
+                input.disabled = reusing;
+            });
+        }
+        choices.forEach(function (choice) { choice.addEventListener('change', toggle); });
+        if (choices.length) toggle();
+
+        // Stop a double click from trying to place the order twice. The view is
+        // idempotent as well, this only saves the customer the round trip.
+        form.addEventListener('submit', function () {
+            const button = form.querySelector('button[type="submit"]');
+            if (button) setTimeout(function () { button.disabled = true; }, 0);
+        });
+    })();
+</script>
+{% endblock scripts %}

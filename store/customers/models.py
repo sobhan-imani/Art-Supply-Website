@@ -1,10 +1,13 @@
-from django.db import models
-from core.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from products.models import Item 
-from .validators import phone_number_validator
-from .managers import UsersManager
+from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from core.models import BaseModel
+from products.models import Item
+
+from .managers import UsersManager
+from .validators import phone_number_validator
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class Meta:

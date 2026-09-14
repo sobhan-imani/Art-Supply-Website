@@ -10,55 +10,266 @@ background-position: center;
 background-repeat: no-repeat;
 background-size: cover;
 }
-.top-banner
-{
-    background-image: url("{% static 'img/banner.jpg' %}");
-    height: 90vh;
+.top-banner {
+    background-image: linear-gradient(rgba(10, 10, 12, 0.55), rgba(10, 10, 12, 0.75)),
+                      url("{% static 'img/banner.jpg' %}");
+    min-height: 92vh;
+    display: flex;
+    align-items: center;
 }
-.discount{
-    background-image: url("{% static 'img/discount.png' %}");
-    min-height: 50vh;
+.discount {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.8)),
+                      url("{% static 'img/discount.png' %}");
+    min-height: 60vh;
+}
+.hero-title {
+    letter-spacing: -0.03em;
+    text-shadow: 0 0.25rem 2rem rgba(0, 0, 0, 0.45);
+}
+.hero-rule {
+    width: 4rem;
+    height: 3px;
+    background: #fff;
+    opacity: 0.8;
+}
+.scroll-cue {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bob 2s ease-in-out infinite;
+}
+@keyframes bob {
+    0%, 100% { transform: translate(-50%, 0); }
+    50%      { transform: translate(-50%, 0.5rem); }
 }
 
+/* the trust strip under the hero */
+.strip {
+    background: #212529;
+    color: #dee2e6;
+}
+.strip .bi { font-size: 1.4rem; }
+
+/* category tiles */
+.tile {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    min-height: 11rem;
+    background: #212529 center/cover no-repeat;
+    color: #fff;
+    text-decoration: none;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.tile:hover { transform: translateY(-0.4rem); box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2); }
+.tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.15));
+}
+.tile > * { position: relative; z-index: 1; }
+
+/* the big discount teaser */
+.deal-card {
+    border: 0;
+    border-radius: 1rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.12);
+}
+.deal-badge {
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
+}
+
+/* cards lift a little on hover, everywhere on this page */
+.card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform: translateY(-0.35rem); box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.12)!important; }
+
+/* reveal on scroll, switched on by js so it degrades to plain content */
+.js-reveal .reveal {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.js-reveal .reveal.shown { opacity: 1; transform: none; }
 {% endblock style %}
 
 {% block content %}
 
-<header class="parallax top-banner">
-    <div class="container py-lg-5">
-        <div class="text-center text-white">
-            <div class="d-flex justify-content-center">
-                <h1 class="display-4 fw-bolder rounded bg-dark p-3 pt-2 mt-5" style="opacity: 85%;">Your dream
-                    artwork</h1>
+<header class="parallax top-banner position-relative">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 text-white">
+                <p class="text-uppercase fw-bold text-white-50 mb-3" style="letter-spacing: 0.25em;">
+                    Art Supply &mdash; since 2023
+                </p>
+                <h1 class="display-2 fw-bolder hero-title mb-4">
+                    Your dream artwork<br>starts with the right tools
+                </h1>
+                <div class="hero-rule mb-4"></div>
+                <p class="lead text-white-50 mb-5" style="max-width: 34rem;">
+                    Brushes, paints, canvases and everything in between, picked one by one
+                    {% if item_count %}&mdash; {{ item_count }} product{{ item_count|pluralize }} in stock right now{% endif %}.
+                </p>
+                <a class="btn btn-lg btn-light rounded-pill px-4 me-2 mb-2" href="{% url 'products-list' %}">
+                    Shop now <i class="bi-arrow-right ms-1"></i>
+                </a>
+                <a class="btn btn-lg btn-outline-light rounded-pill px-4 mb-2"
+                   href="{% url 'products-list' %}?discount=1">See the deals</a>
             </div>
-            <p class="lead fw-normal text-white-50 mt-2 mb-2">Best arts waiting for you</p>
-            <a class="btn btn-lg btn-outline-light mt-5 rounded-pill" href="{% url 'products-list' %}">Shop Now</a>
         </div>
     </div>
+    <a class="scroll-cue text-white fs-3 text-decoration-none" href="#new-products" aria-label="Scroll down">
+        <i class="bi-chevron-double-down"></i>
+    </a>
 </header>
+
+<section class="strip py-4">
+    <div class="container px-4 px-lg-5">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-lg-3">
+                <i class="bi-truck d-block mb-2"></i>
+                <span class="small">Countrywide delivery</span>
+            </div>
+            <div class="col-6 col-lg-3">
+                <i class="bi-shield-check d-block mb-2"></i>
+                <span class="small">Secure checkout</span>
+            </div>
+            <div class="col-6 col-lg-3">
+                <i class="bi-arrow-counterclockwise d-block mb-2"></i>
+                <span class="small">7 day returns</span>
+            </div>
+            <div class="col-6 col-lg-3">
+                <i class="bi-headset d-block mb-2"></i>
+                <span class="small">Advice from artists</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if featured_categories %}
 <section class="py-5">
-    <div class="container px-4 px-lg-5 mt-3 pt-5">
-        <h3 class="fw-bolder mb-4 pb-4">New Products</h3>
-        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+    <div class="container px-4 px-lg-5 mt-3">
+        <div class="d-flex justify-content-between align-items-end mb-4 reveal">
+            <div>
+                <h3 class="fw-bolder mb-1">Shop by category</h3>
+                <p class="text-muted mb-0">Find your corner of the store</p>
+            </div>
+            <a class="btn btn-sm btn-outline-dark rounded-pill" href="{% url 'products-list' %}">All products</a>
+        </div>
+        <div class="row g-3">
+            {% for category in featured_categories %}
+            <div class="col-6 col-lg-3 reveal">
+                {% with sample=category.item_set.first %}
+                <a class="tile d-flex flex-column justify-content-end p-3"
+                   {% if sample.picture1 %}style="background-image: url('{{ sample.picture1.url }}');"{% endif %}
+                   href="{% url 'products-list' %}?category={{ category.category_name }}">
+                    <h5 class="mb-1 text-capitalize">{{ category.category_name }}</h5>
+                    <span class="small text-white-50">{{ category.item_count }} product{{ category.item_count|pluralize }}</span>
+                </a>
+                {% endwith %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="pb-5" id="new-products">
+    <div class="container px-4 px-lg-5 mt-3 pt-3">
+        <div class="d-flex justify-content-between align-items-end mb-4 reveal">
+            <div>
+                <h3 class="fw-bolder mb-1">New arrivals</h3>
+                <p class="text-muted mb-0">The latest to land on our shelves</p>
+            </div>
+            <a class="btn btn-sm btn-outline-dark rounded-pill" href="{% url 'products-list' %}">View all</a>
+        </div>
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 reveal">
             {% for item in last_items %}
             {% include 'cards.html' with item=item %}
+            {% empty %}
+            <p class="text-muted">Nothing in stock at the moment, please check back soon.</p>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="discount parallax">
-    <div class="container px-4 px-lg-5 mt-3 pt-5">
-        <div class="row gx-4 gx-lg-5 justify-content-end">
-            <div class="col-12 col-md-6 mb-5 text-center">
-                <h3 class="fw-bolder pb-3 mt-5">Discounts</h3>
-                <p class="lead fw-normal text-muted mb-3">Just for you</p>
-                <a class="btn btn-lg btn-outline-dark mt-5 rounded-pill" href="{% url 'products-list' %}?discount=1">Show more</a>
+{% if best_discount %}
+<section class="discount parallax py-5">
+    <div class="container px-4 px-lg-5 py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 reveal">
+                <span class="badge bg-danger deal-badge mb-3">-%{{ best_discount.discount }} OFF</span>
+                <h3 class="display-5 fw-bolder">Deal of the moment</h3>
+                <h4 class="text-capitalize mb-3">{{ best_discount.name }}</h4>
+                <p class="lead text-muted">{{ best_discount.descriptions|truncatewords:20 }}</p>
+                <p class="mb-4">
+                    <span class="text-muted text-decoration-line-through me-2">${{ best_discount.price }}</span>
+                    <span class="display-6 font-monospace fw-bold">${{ best_discount.final_price }}</span>
+                </p>
+                <a class="btn btn-dark btn-lg rounded-pill px-4"
+                   href="{% url 'product-detail' best_discount.id %}">Grab it</a>
+                <a class="btn btn-outline-dark btn-lg rounded-pill px-4"
+                   href="{% url 'products-list' %}?discount=1">All discounts</a>
             </div>
-            {% for item in discounted_items %}
-            {% include 'cards.html' with item=item %}
-            {% endfor %}
+            <div class="col-lg-6">
+                <div class="row g-3 row-cols-1 row-cols-md-3 reveal">
+                    {% for item in discounted_items %}
+                    {% include 'cards.html' with item=item %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="py-5 bg-light">
+    <div class="container px-4 px-lg-5 py-4">
+        <div class="row g-4 text-center">
+            <div class="col-md-4 reveal">
+                <i class="bi-palette fs-1 d-block mb-3"></i>
+                <h5>Picked by painters</h5>
+                <p class="text-muted mb-0">Every item on the shelf is one we would use ourselves.</p>
+            </div>
+            <div class="col-md-4 reveal">
+                <i class="bi-box-seam fs-1 d-block mb-3"></i>
+                <h5>Packed with care</h5>
+                <p class="text-muted mb-0">Brushes and canvases arrive the way they left us.</p>
+            </div>
+            <div class="col-md-4 reveal">
+                <i class="bi-chat-dots fs-1 d-block mb-3"></i>
+                <h5>Here to help</h5>
+                <p class="text-muted mb-0">Not sure which paper suits your ink? Just ask.</p>
+            </div>
         </div>
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    // Reveal sections as they come into view. The class is added by js, so with
+    // javascript off everything is simply visible from the start.
+    (function () {
+        const targets = document.querySelectorAll('.reveal');
+        if (!targets.length || !('IntersectionObserver' in window)) return;
+        document.body.classList.add('js-reveal');
+
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('shown');
+                observer.unobserve(entry.target);
+            });
+        }, { rootMargin: '0px 0px -10% 0px' });
+
+        targets.forEach(function (target, index) {
+            target.style.transitionDelay = (index % 4) * 80 + 'ms';
+            observer.observe(target);
+        });
+    })();
+</script>
+{% endblock scripts %}
