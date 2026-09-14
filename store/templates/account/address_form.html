@@ -1,0 +1,27 @@
+{% extends "../base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <div class="border rounded w-100 mt-4 mb-5 p-4" style="max-width: 42rem;">
+        <h2 class="mb-4">{{ title }}</h2>
+        {% include '../partials/form-errors.html' %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="row g-3">
+                {% for field in form %}
+                <div class="col-md-6">
+                    {% include '../partials/field.html' with field=field %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-dark" type="submit">Save address</button>
+                <a class="btn btn-outline-secondary" href="{% url 'account_profile' %}#Address">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

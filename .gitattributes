@@ -1,0 +1,27 @@
+# One canonical line ending in the repository: LF. Without this, a checkout on
+# Windows (core.autocrlf=true) rewrites every file and git keeps warning that
+# "LF will be replaced by CRLF".
+* text=auto eol=lf
+
+# Windows-only helpers keep their native endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Never touch binaries.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.mo   binary
+*.sqlite3 binary
+
+# .po files are text, but diffing them line by line is what you want.
+*.po text eol=lf

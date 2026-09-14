@@ -1,0 +1,176 @@
+{% extends "../base.html" %}
+{% load product_extras %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row m-0">
+        <div id="carouselControls" class="carousel slide my-2 col-md-6" data-bs-ride="carousel">
+            {% if product.picture2 %}
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#carouselControls" data-bs-slide-to="0" class="active"
+                    aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#carouselControls" data-bs-slide-to="1"
+                    aria-label="Slide 2"></button>
+            </div>
+            {% endif %}
+
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="{{ product|product_image }}" class="d-block w-100" alt="{{ product.name }} picture 1">
+                </div>
+                {% if product.picture2 %}
+                <div class="carousel-item">
+                    <img src="{{ product.picture2.url }}" class="d-block w-100" alt="{{ product.name }} picture 2">
+                </div>
+                {% endif %}
+            </div>
+
+            {% if product.picture2 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#carouselControls" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carouselControls" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center border-bottom">
+                <h1 class="pb-3">{{ product.name }}</h1>
+                {% if user.is_authenticated %}
+                <div class="text-end">
+                    <!-- wishlist button -->
+                    <button id="wishlist" type="button" data-url="{% url 'wishlist' product.id %}"
+                        class="btn {% if is_in_wishlist %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                        data-bs-toggle="tooltip"
+                        title="{% if is_in_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+                        <i class="bi {% if is_in_wishlist %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                    </button>
+                    <div id="wishlist-note" class="small mt-1" hidden></div>
+                </div>
+                {% else %}
+                <a class="btn btn-outline-danger" href="{% url 'account_login' %}?next={{ request.path }}"
+                   data-bs-toggle="tooltip" title="Log in to use your wishlist">
+                    <i class="bi bi-heart"></i>
+                </a>
+                {% endif %}
+            </div>
+
+            <p class="mt-4 lead"><small>{{ product.descriptions }}</small></p>
+
+            <div class="mt-4 pt-2 d-flex justify-content-between">
+                {% if product.category %}
+                <div class="text-start">
+                    <a href="{% url 'products-list' %}?category={{ product.category }}"
+                       class="badge text-decoration-none btn-dark">{{ product.category }}</a>
+                </div>
+                {% endif %}
+                {% if product.stock < 3 %}
+                <div class="text-end">
+                    {% if product.stock == 0 %}
+                    <span class="badge bg-danger">Out of stock</span>
+                    {% else %}
+                    <span class="badge bg-danger">Only {{ product.stock }} left in stock</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-2 d-flex justify-content-between align-items-center border-top">
+                <div class="d-flex">
+                    {% if product.discount %}
+                    <span class="text-muted text-decoration-line-through">${{ product.price }}</span>
+                    {% endif %}
+                    <p class="display-6 font-monospace fw-bold">${{ product.final_price }}</p>
+                </div>
+                <div class="d-flex mb-2">
+                    {% if product.stock > 0 %}
+                    <form data-cart-form action="{% url 'orders:cart_add' product.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            {% if product.stock > 1 %}
+                            <div class="col-4"></div>
+                            <div class="col-3">
+                                <input class="form-control" type="number"
+                                       name="quantity" value="1" min="1" max="{{ product.stock }}">
+                            </div>
+                            <button class="btn btn-primary col-5" type="submit">Add to cart</button>
+                            {% else %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button class="btn btn-primary" type="submit">Add to cart</button>
+                            {% endif %}
+                        </div>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-primary" type="button" disabled>Add to cart</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const button = document.getElementById('wishlist');
+        const note = document.getElementById('wishlist-note');
+        if (!button) return;
+
+        function say(text, css) {
+            if (!note) return;
+            note.className = 'small mt-1 ' + css;
+            note.textContent = text;
+            note.hidden = false;
+            setTimeout(function () { note.hidden = true; }, 3000);
+        }
+
+        function paint(inWishlist) {
+            const title = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
+            button.classList.toggle('btn-danger', inWishlist);
+            button.classList.toggle('btn-outline-danger', !inWishlist);
+            button.innerHTML = '<i class="bi ' + (inWishlist ? 'bi-heart-fill' : 'bi-heart') + '"></i>';
+            button.title = title;
+            button.setAttribute('data-bs-original-title', title);
+            if (window.bootstrap) {
+                const tooltip = bootstrap.Tooltip.getInstance(button);
+                if (tooltip) tooltip.setContent({ '.tooltip-inner': title });
+            }
+        }
+
+        button.addEventListener('click', function () {
+            button.disabled = true;
+            // The session cookie is enough on its own; the JWT is sent as well
+            // for whoever is browsing with a token from the API login.
+            fetch(button.dataset.url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            }).then(function (response) {
+                if (!response.ok) throw new Error(response.status);
+                return response.json();
+            }).then(function (data) {
+                const inWishlist = (data.wishlist || []).some(function (item) {
+                    return item.id === {{ product.id }};
+                });
+                paint(inWishlist);
+                say(inWishlist ? 'Added to your wishlist' : 'Removed from your wishlist', 'text-success');
+            }).catch(function () {
+                say('Could not update your wishlist, please log in again.', 'text-danger');
+            }).finally(function () {
+                button.disabled = false;
+            });
+        });
+    })();
+</script>
+{% endblock %}

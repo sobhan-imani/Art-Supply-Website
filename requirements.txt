@@ -1,0 +1,21 @@
+# Runtime dependencies.
+asgiref==3.5.2
+certifi==2022.12.7
+charset-normalizer==2.1.1
+Django==4.1.4
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
+idna==3.4
+Pillow==9.3.0
+PyJWT==1.7.1
+pytz==2022.7.1
+requests==2.28.1
+sqlparse==0.4.3
+tzdata==2022.7
+urllib3==1.26.13
+
+# Serving the site. Optional while developing with runserver: settings.py only
+# switches WhiteNoise on when it is importable.
+gunicorn==21.2.0
+whitenoise==6.6.0
+psycopg2-binary==2.9.9

@@ -1,0 +1,55 @@
+{% load product_extras %}
+{% comment %}
+The cart itself: rendered inside the navbar offcanvas on every page, and
+re-rendered on its own by the cart views after each change.
+{% endcomment %}
+<ul class="list-group list-group-flush">
+    {% for row in cart %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <figure class="figure mt-3" style="width: 30%;">
+            <a href="{% url 'product-detail' row.item.id %}">
+                <img src="{{ row.item|product_image }}" class="figure-img img-fluid rounded"
+                     alt="{{ row.item.name }}">
+            </a>
+        </figure>
+        <div class="text-center">
+            <h6 class="text-capitalize">
+                <a class="link text-decoration-none text-black"
+                   href="{% url 'product-detail' row.item.id %}">{{ row.item.name }}</a>
+            </h6>
+            <p class="font-monospace mb-1">
+                <small class="text-muted">{{ row.quantity }} x</small> ${{ row.price }}
+            </p>
+            <form class="d-flex justify-content-center" data-cart-form method="post"
+                  action="{% url 'orders:cart_update' row.item.id %}">
+                {% csrf_token %}
+                <input class="form-control form-control-sm" style="width: 4.5rem;" type="number"
+                       name="quantity" value="{{ row.quantity }}" min="1" max="{{ row.item.stock }}"
+                       aria-label="Quantity of {{ row.item.name }}">
+                <button class="btn btn-sm btn-outline-dark ms-1" type="submit">Update</button>
+            </form>
+        </div>
+        <form data-cart-form method="post" action="{% url 'orders:cart_remove' row.item.id %}">
+            {% csrf_token %}
+            <button class="btn btn-light bi-x btn-sm border rounded-pill mb-2"
+                    style="border-color: rgba(0, 0, 0, 0.26)!important;" type="submit"
+                    title="Remove {{ row.item.name }}"></button>
+        </form>
+    </li>
+    {% empty %}
+    <li class="list-group-item text-center py-5">
+        <p class="font-monospace text-muted">Your cart is empty</p>
+        <a class="btn btn-outline-dark" href="{% url 'products-list' %}">Start shopping</a>
+    </li>
+    {% endfor %}
+
+    {% if cart|length %}
+    <li class="list-group-item d-flex justify-content-between fs-5">
+        <p class="text-muted">Subtotal:</p>
+        <span class="fw-bolder font-monospace">${{ cart.get_total_price|floatformat:2 }}</span>
+    </li>
+    <li class="list-group-item">
+        <a class="btn btn-dark w-100 py-2 fw-bold mt-2" href="{% url 'orders:checkout' %}">CHECKOUT</a>
+    </li>
+    {% endif %}
+</ul>

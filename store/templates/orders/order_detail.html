@@ -1,0 +1,153 @@
+{% extends "../base.html" %}
+{% load product_extras %}
+
+{% block title %}Order #{{ order.id }}{% endblock %}
+
+{% block style %}
+.track-step {
+    position: relative;
+    padding-bottom: 1.75rem;
+    padding-left: 2.25rem;
+}
+.track-step:last-child { padding-bottom: 0; }
+.track-step::before {
+    /* the dot */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid #adb5bd;
+    background: #fff;
+}
+.track-step::after {
+    /* the line down to the next dot */
+    content: "";
+    position: absolute;
+    left: 0.45rem;
+    top: 1.3rem;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+.track-step:last-child::after { display: none; }
+.track-step.done::before { background: #198754; border-color: #198754; }
+.track-step.done::after { background: #198754; }
+.track-step.current::before { box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25); }
+{% endblock style %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="mb-1">Order <span class="font-monospace">#{{ order.id }}</span></h2>
+            <p class="text-muted mb-0">Placed {{ order.created_at|date:"Y/m/d H:i" }}</p>
+        </div>
+        <div class="text-end">
+            {% include 'orders/_status_badge.html' with order=order %}
+            <p class="font-monospace fw-bold fs-4 mb-0 mt-2">${{ order.price|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <div class="row gx-lg-5">
+        <div class="col-lg-5">
+            <h4 class="mb-4">Tracking</h4>
+            <div class="mb-4">
+                {% for step in order.tracking_steps %}
+                <div class="track-step {% if step.done %}done{% endif %} {% if step.current %}current{% endif %}">
+                    <h6 class="mb-1 {% if not step.done %}text-muted{% endif %}">{{ step.label }}</h6>
+                    {% if step.event %}
+                    <p class="small text-muted mb-0">
+                        {{ step.event.created_at|date:"Y/m/d H:i" }}<br>{{ step.event.note }}
+                    </p>
+                    {% else %}
+                    <p class="small text-muted mb-0">Not yet</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if order.status == 'awaiting' %}
+            <div class="alert alert-warning">
+                <p class="mb-2">
+                    <i class="bi-credit-card me-1"></i>This order is not paid yet. Your items stay
+                    reserved until {{ order.payment_deadline|date:"Y/m/d H:i" }}.
+                </p>
+                <a class="btn btn-dark w-100" href="{% url 'orders:payment_start' order.id %}">
+                    Pay ${{ order.price|floatformat:2 }}
+                </a>
+            </div>
+            {% endif %}
+
+            {% if order.status == 'canceled' or order.status == 'rejected' %}
+            <div class="alert alert-danger">
+                This order is {{ order.get_status_display|lower }} and will not be delivered.
+            </div>
+            {% endif %}
+
+            {% if order.can_be_canceled %}
+            <form method="post" action="{% url 'orders:order_cancel' order.id %}"
+                  onsubmit="return confirm('Cancel order #{{ order.id }}?');">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger w-100" type="submit">Cancel this order</button>
+            </form>
+            {% endif %}
+
+            <h4 class="mt-5 mb-3">Shipping to</h4>
+            {% if order.address %}
+            <p class="mb-1">{{ order.address.street }}{% if order.address.alley %}, {{ order.address.alley }}{% endif %}</p>
+            {% if order.address.district %}<p class="mb-1">{{ order.address.district }}</p>{% endif %}
+            <p class="mb-1">{{ order.address.city }}, {{ order.address.country }}</p>
+            <p class="font-monospace text-muted">{{ order.address.postal_code }}</p>
+            {% else %}
+            <p class="text-muted">This address is no longer on file.</p>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-7 mt-5 mt-lg-0">
+            <h4 class="mb-4">Items</h4>
+            <ul class="list-group list-group-flush">
+                {% for row in order.order_items.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <figure class="figure mb-0 me-3" style="width: 4.5rem;">
+                        <a href="{% url 'product-detail' row.item.id %}">
+                            <img src="{{ row.item|product_image }}" class="figure-img img-fluid rounded mb-0"
+                                 alt="{{ row.item.name }}">
+                        </a>
+                    </figure>
+                    <div class="me-auto">
+                        <a class="link text-decoration-none text-black fw-bold"
+                           href="{% url 'product-detail' row.item.id %}">{{ row.item.name }}</a>
+                        <p class="small text-muted font-monospace mb-0">{{ row.quantity }} x ${{ row.price }}</p>
+                    </div>
+                    <span class="font-monospace">${{ row.total_price|floatformat:2 }}</span>
+                </li>
+                {% endfor %}
+                <li class="list-group-item d-flex justify-content-between fs-5 px-0">
+                    <span class="text-muted">Total:</span>
+                    <span class="fw-bolder font-monospace">${{ order.price|floatformat:2 }}</span>
+                </li>
+            </ul>
+
+            <h4 class="mt-5 mb-3">History</h4>
+            <ul class="list-group list-group-flush">
+                {% for event in order.events.all %}
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>{{ event.get_status_display }}<small class="text-muted d-block">{{ event.note }}</small></span>
+                    <span class="text-muted small font-monospace">{{ event.created_at|date:"Y/m/d H:i" }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item px-0 text-muted">Nothing recorded yet.</li>
+                {% endfor %}
+            </ul>
+
+            <div class="mt-4">
+                <a class="btn btn-dark" href="{% url 'account_profile' %}#list-orders">All my orders</a>
+                <a class="btn btn-outline-dark" href="{% url 'products-list' %}">Keep shopping</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

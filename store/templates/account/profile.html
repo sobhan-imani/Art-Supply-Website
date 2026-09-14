@@ -1,0 +1,227 @@
+{% extends "../base.html" %}
+{% load static %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container p-4 p-lg-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="list-group" id="list-tab" role="tablist">
+                <a class="list-group-item list-group-item-action active" id="list-home-list" data-bs-toggle="list"
+                    href="#list-home" role="tab" aria-controls="list-home">
+                    <i class="bi-person me-2"></i>Account
+                </a>
+                <a class="list-group-item list-group-item-action" id="Wishlist-list" data-bs-toggle="list"
+                    href="#Wishlist" role="tab" aria-controls="Wishlist">
+                    <i class="bi-heart me-2"></i>Wishlist
+                    <span class="badge bg-dark rounded-pill float-end">{{ profile.wishlist.count }}</span>
+                </a>
+                <a class="list-group-item list-group-item-action" id="list-orders-list" data-bs-toggle="list"
+                    href="#list-orders" role="tab" aria-controls="list-orders">
+                    <i class="bi-box-seam me-2"></i>Order History
+                    <span class="badge bg-dark rounded-pill float-end">{{ orders|length }}</span>
+                </a>
+                <a class="list-group-item list-group-item-action" id="Address-list" data-bs-toggle="list"
+                    href="#Address" role="tab" aria-controls="Address">
+                    <i class="bi-geo-alt me-2"></i>Addresses
+                    <span class="badge bg-dark rounded-pill float-end">{{ addresses|length }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="tab-content" id="nav-tabContent">
+
+                <!-- account details -->
+                <div class="tab-pane fade show active" id="list-home" role="tabpanel" aria-labelledby="list-home-list">
+                    <h2 class="mb-4">Account</h2>
+                    {% include '../partials/form-errors.html' %}
+                    <form method="post" action="{% url 'account_profile' %}" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            {% for field in form %}
+                            <div class="col-md-6 mb-3">
+                                {% include '../partials/field.html' with field=field %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-dark mt-2" type="submit">Save changes</button>
+                    </form>
+                </div>
+
+                <!-- wishlist -->
+                <div class="tab-pane fade" id="Wishlist" role="tabpanel" aria-labelledby="Wishlist-list">
+                    <h2 class="mb-4">Wishlist</h2>
+                    <ol class="list-group" id="wishlist-items">
+                        {% for item in profile.wishlist.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">
+                                    <a href="{% url 'product-detail' item.id %}" class="nav-link p-0">{{ item.name }}</a>
+                                </div>
+                                {{ item.descriptions|truncatewords:5 }}
+                                <p class="font-monospace mt-3 mb-1">${{ item.final_price }}</p>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                {% if item.stock > 0 %}
+                                <form data-cart-form method="post" action="{% url 'orders:cart_add' item.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button class="btn btn-sm btn-outline-dark mb-2" type="submit">Add to cart</button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-danger mb-2">Out of stock</span>
+                                {% endif %}
+                                <button class="btn btn-light bi-x btn-sm border rounded-pill btn-wish"
+                                    style="border-color: rgba(0, 0, 0, 0.26)!important;"
+                                    data-url="{% url 'wishlist' item.id %}"
+                                    title="Remove from wishlist"></button>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-center py-5">
+                            <p class="font-monospace text-muted mb-3">Wishlist is empty</p>
+                            <a class="btn btn-outline-dark" href="{% url 'products-list' %}">Find something you like</a>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+
+                <!-- order history -->
+                <div class="tab-pane fade" id="list-orders" role="tabpanel" aria-labelledby="list-orders-list">
+                    <h2 class="mb-4">Orders</h2>
+                    {% for order in orders %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                <div>
+                                    <h5 class="card-title font-monospace mb-1">
+                                        <a class="link text-decoration-none text-black"
+                                           href="{% url 'orders:order_detail' order.id %}">Order #{{ order.id }}</a>
+                                    </h5>
+                                    <p class="text-muted small mb-2">
+                                        {{ order.created_at|date:"Y/m/d H:i" }} &middot;
+                                        {{ order.total_quantity }} item{{ order.total_quantity|pluralize }}
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    {% include 'orders/_status_badge.html' with order=order %}
+                                    <p class="font-monospace fw-bold fs-5 mb-0 mt-2">${{ order.price|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            <ul class="list-unstyled small text-muted mb-3">
+                                {% for row in order.order_items.all %}
+                                <li>{{ row.quantity }} x {{ row.item.name }}
+                                    <span class="font-monospace">${{ row.price }}</span></li>
+                                {% endfor %}
+                            </ul>
+                            <a class="btn btn-sm btn-dark" href="{% url 'orders:order_detail' order.id %}">
+                                <i class="bi-truck me-1"></i>Track order
+                            </a>
+                            {% if order.status == 'awaiting' %}
+                            <a class="btn btn-sm btn-warning" href="{% url 'orders:payment_start' order.id %}">
+                                <i class="bi-credit-card me-1"></i>Pay now
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-5">
+                        <p class="font-monospace text-muted mb-3">Nothing to show.</p>
+                        <a class="btn btn-outline-dark" href="{% url 'products-list' %}">Place your first order</a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- addresses -->
+                <div class="tab-pane fade" id="Address" role="tabpanel" aria-labelledby="Address-list">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">Addresses</h2>
+                        <a class="btn btn-dark" href="{% url 'address_create' %}">
+                            <i class="bi-plus-lg me-1"></i>Add address
+                        </a>
+                    </div>
+                    <div class="row g-3">
+                        {% for address in addresses %}
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ address.city }}, {{ address.country }}</h6>
+                                    <p class="card-text mb-1">
+                                        {{ address.street }}{% if address.alley %}, {{ address.alley }}{% endif %}
+                                        {% if address.district %}<br>{{ address.district }}{% endif %}
+                                    </p>
+                                    <p class="card-text font-monospace text-muted small">{{ address.postal_code }}</p>
+                                    <a class="btn btn-sm btn-outline-dark"
+                                       href="{% url 'address_update' address.id %}">Edit</a>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       href="{% url 'address_delete' address.id %}">Remove</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="list-group-item text-center py-5">
+                                <p class="font-monospace text-muted mb-3">No address saved yet.</p>
+                                <a class="btn btn-outline-dark" href="{% url 'address_create' %}">Add your first address</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Keep the open tab across a save or a trip to the address forms.
+    (function () {
+        const tabs = document.querySelectorAll('#list-tab a[data-bs-toggle="list"]');
+        const wanted = window.location.hash;
+        if (wanted) {
+            const tab = document.querySelector('#list-tab a[href="' + wanted + '"]');
+            if (tab && window.bootstrap) bootstrap.Tab.getOrCreateInstance(tab).show();
+        }
+        tabs.forEach(function (tab) {
+            tab.addEventListener('shown.bs.tab', function () {
+                history.replaceState(null, '', this.getAttribute('href'));
+            });
+        });
+    })();
+
+    $(document).ready(function () {
+        const emptyWishlist =
+            '<li class="list-group-item text-center py-5">' +
+            '<p class="font-monospace text-muted mb-3">Wishlist is empty</p>' +
+            '<a class="btn btn-outline-dark" href="{% url 'products-list' %}">Find something you like</a>' +
+            '</li>';
+
+        $('#wishlist-items').on('click', '.btn-wish', function () {
+            const button = $(this);
+            const row = button.closest('li');
+            fetch(button.data('url'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            }).then(function (response) {
+                if (!response.ok) throw new Error(response.status);
+                return response.json();
+            }).then(function (data) {
+                row.addClass('bg-danger').fadeOut(600, function () {
+                    row.remove();
+                    if (data.wishlist.length === 0) $('#wishlist-items').html(emptyWishlist);
+                });
+            }).catch(function () {
+                button.after('<span class="text-danger small ms-2">Could not update, please log in again.</span>');
+            });
+        });
+    });
+</script>
+{% endblock %}
