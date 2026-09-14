@@ -1,4 +1,5 @@
 {% extends "../base.html" %}
+{% load product_extras %}
 
 {% block title %}{{ product.name }}{% endblock %}
 
@@ -17,7 +18,7 @@
 
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <img src="{{ product.picture1.url }}" class="d-block w-100" alt="{{ product.name }} picture 1">
+                    <img src="{{ product|product_image }}" class="d-block w-100" alt="{{ product.name }} picture 1">
                 </div>
                 {% if product.picture2 %}
                 <div class="carousel-item">

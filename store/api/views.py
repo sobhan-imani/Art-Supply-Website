@@ -19,7 +19,7 @@ def wishlist(request, pk):
         profile.wishlist.remove(product)
     else:
         profile.wishlist.add(product)
-    serializer = WishlistSerializer(profile)
+    serializer = WishlistSerializer(profile, context={'request': request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -31,4 +31,5 @@ def profile(request):
                 .prefetch_related('wishlist', 'addresses', 'orders__order_items__item',
                                   'orders__address')
                 .get(pk=request.user.profile.pk))
-    return Response(ProfileSerializer(queryset).data, status=status.HTTP_200_OK)
+    return Response(ProfileSerializer(queryset, context={'request': request}).data,
+                    status=status.HTTP_200_OK)

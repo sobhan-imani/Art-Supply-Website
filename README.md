@@ -123,7 +123,7 @@ has no migration.
 
 ## Tests
 
-124 tests, and the same four gates CI runs on every push:
+129 tests, and the same four gates CI runs on every push:
 
 ```bash
 cd store
@@ -133,10 +133,20 @@ python manage.py test
 python manage.py check --deploy                     # production settings
 ```
 
+## Product images
+
+`Item.picture1` is required, but rows created without a real upload (fixtures,
+tests, the admin before a photo is ready) used to fall back to
+`media/item-images/default.jpg` - a file nobody ever shipped, so it 404s.
+`products/images.py` is the one place that decides what an item actually shows:
+its own picture when the file really exists on disk, otherwise
+`static/img/product-placeholder.jpg` (public domain, a stack of colored
+pencils). Templates use it through the `product_image` filter
+(`{{ item|product_image }}`); the API serializer calls the same helper, so a
+product's JSON and its page never disagree about the picture.
+
 ## Still to do
 
-- Product images fall back to a missing `media/item-images/default.jpg`; the
-  placeholder should move into `static/`.
 - SEO and accessibility: sitemap, canonical links, product JSON-LD, slugs in
   URLs, `aria-live` on the cart sidebar, a `prefers-reduced-motion` guard.
 - Persian as the default language: `LocaleMiddleware`, RTL, a language switcher,

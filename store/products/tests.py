@@ -1,9 +1,14 @@
+import shutil
+import tempfile
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.templatetags.static import static
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from .images import PLACEHOLDER, item_picture_url
 from .models import Category, Item
 
 User = get_user_model()
@@ -160,3 +165,45 @@ class WishlistApiTests(TestCase):
 
     def test_the_profile_endpoint_needs_a_login(self):
         self.assertIn(self.client.get(reverse('api_profile')).status_code, (401, 403))
+
+
+class ProductImageFallbackTests(TestCase):
+    """Item.picture1 has always had a default naming a file nobody ships, so
+    every item created without a real upload used to serialize or render a
+    URL that 404s.
+    """
+
+    def setUp(self):
+        # A real upload writes to MEDIA_ROOT; keep that out of the project's own
+        # media/ directory instead of leaving files behind after every test run.
+        media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+
+        self.item = Item.objects.create(name='Brush', price=Decimal('10.00'), stock=4)
+
+    def test_an_item_with_no_real_file_gets_the_placeholder(self):
+        self.assertEqual(item_picture_url(self.item), static(PLACEHOLDER))
+
+    def test_an_item_with_a_real_file_keeps_its_own_picture(self):
+        self.item.picture1 = SimpleUploadedFile('brush.jpg', b'not a real jpeg, just bytes')
+        self.item.save()
+        url = item_picture_url(self.item)
+        self.assertNotEqual(url, static(PLACEHOLDER))
+        self.assertIn('brush', url)
+
+    def test_the_product_list_shows_the_placeholder_not_a_broken_image(self):
+        response = self.client.get(reverse('products-list'))
+        self.assertContains(response, static(PLACEHOLDER))
+
+    def test_the_product_detail_page_shows_the_placeholder(self):
+        response = self.client.get(reverse('product-detail', args=[self.item.id]))
+        self.assertContains(response, static(PLACEHOLDER))
+
+    def test_the_api_serves_the_same_placeholder(self):
+        User.objects.create_user(phone_number='09120000000', password='secret1234')
+        self.client.login(username='09120000000', password='secret1234')
+        response = self.client.post(reverse('wishlist', args=[self.item.id]))
+        self.assertIn(static(PLACEHOLDER), response.json()['wishlist'][0]['picture1'])

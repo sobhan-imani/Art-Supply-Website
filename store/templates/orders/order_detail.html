@@ -1,4 +1,5 @@
 {% extends "../base.html" %}
+{% load product_extras %}
 
 {% block title %}Order #{{ order.id }}{% endblock %}
 
@@ -112,7 +113,7 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <figure class="figure mb-0 me-3" style="width: 4.5rem;">
                         <a href="{% url 'product-detail' row.item.id %}">
-                            <img src="{{ row.item.picture1.url }}" class="figure-img img-fluid rounded mb-0"
+                            <img src="{{ row.item|product_image }}" class="figure-img img-fluid rounded mb-0"
                                  alt="{{ row.item.name }}">
                         </a>
                     </figure>

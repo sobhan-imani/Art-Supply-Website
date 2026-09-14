@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load product_extras %}
 {% block title %}Home{% endblock %}
 
 {% block style %}
@@ -164,7 +165,7 @@ background-size: cover;
             <div class="col-6 col-lg-3 reveal">
                 {% with sample=category.item_set.first %}
                 <a class="tile d-flex flex-column justify-content-end p-3"
-                   {% if sample.picture1 %}style="background-image: url('{{ sample.picture1.url }}');"{% endif %}
+                   {% if sample %}style="background-image: url('{{ sample|product_image }}');"{% endif %}
                    href="{% url 'products-list' %}?category={{ category.category_name }}">
                     <h5 class="mb-1 text-capitalize">{{ category.category_name }}</h5>
                     <span class="small text-white-50">{{ category.item_count }} product{{ category.item_count|pluralize }}</span>
