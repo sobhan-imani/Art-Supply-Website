@@ -75,7 +75,7 @@ tracking timeline, all managed from the Django admin.
 |---|---|
 | **Backend** | Python 3.11, Django 4.1, Django REST Framework, Simple JWT |
 | **Database** | SQLite for development, PostgreSQL for production |
-| **Frontend** | Django templates, Bootstrap 5, vanilla JS (progressive enhancement, no build step) |
+| **Frontend** | Django templates, Bootstrap 5 from the jsDelivr CDN, vanilla JS (progressive enhancement, no build step) |
 | **Background work** | A database-backed queue, `SELECT … FOR UPDATE SKIP LOCKED` |
 | **Serving** | Gunicorn, WhiteNoise, a `Procfile` for PaaS hosts |
 | **Quality** | Django's test runner, `ruff`, GitHub Actions |
@@ -131,9 +131,7 @@ art-supply-website/
     ├── customers/            # the phone-number user, Profile, Address, auth
     ├── orders/               # cart, checkout, payment, tracking, job queue
     ├── api/                  # JWT tokens, wishlist toggle, profile endpoint
-    ├── static/
-    │   ├── css/ js/ img/     # the project's own assets
-    │   └── vendor/           # third-party code (Bootstrap)
+    ├── static/               # CSS, JS, images (Bootstrap itself comes from a CDN)
     ├── templates/
     └── locale/fa/            # Persian translations
 ```
