@@ -26,7 +26,7 @@
 # .po files are text, but diffing them line by line is what you want.
 *.po text eol=lf
 
-static/** linguist-vendored
-templates/** linguist-vendored
-*.css linguist-vendored
-*.html linguist-vendored
+# Language statistics (GitHub Linguist).
+# Bootstrap comes from a CDN; the one third-party file still in the repository
+# is excluded, so the language bar reports the code written for this project.
+store/static/js/jquery-*.min.js linguist-vendored
