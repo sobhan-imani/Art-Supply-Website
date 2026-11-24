@@ -26,7 +26,9 @@
 # .po files are text, but diffing them line by line is what you want.
 *.po text eol=lf
 
-static/** linguist-vendored
-templates/** linguist-vendored
-*.css linguist-vendored
-*.html linguist-vendored
+# Language statistics (GitHub Linguist).
+# Third-party code lives under store/static/vendor/ (Bootstrap) and is
+# excluded from the language bar, so the repository is reported by the code
+# actually written for it: Python first, then the Django templates.
+store/static/vendor/** linguist-vendored
+store/static/js/jquery-*.min.js linguist-vendored
