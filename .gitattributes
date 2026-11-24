@@ -27,8 +27,6 @@
 *.po text eol=lf
 
 # Language statistics (GitHub Linguist).
-# Third-party code lives under store/static/vendor/ (Bootstrap) and is
-# excluded from the language bar, so the repository is reported by the code
-# actually written for it: Python first, then the Django templates.
-store/static/vendor/** linguist-vendored
+# Bootstrap comes from a CDN; the one third-party file still in the repository
+# is excluded, so the language bar reports the code written for this project.
 store/static/js/jquery-*.min.js linguist-vendored
