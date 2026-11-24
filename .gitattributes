@@ -25,3 +25,8 @@
 
 # .po files are text, but diffing them line by line is what you want.
 *.po text eol=lf
+
+static/** linguist-vendored
+templates/** linguist-vendored
+*.css linguist-vendored
+*.html linguist-vendored
